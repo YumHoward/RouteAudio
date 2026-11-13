@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <!-- 由 installer/generate-installer.ps1 生成，请勿手工编辑 -->
+  <Package Name="RouteAudio"
+           Manufacturer="RouteAudio Contributors"
+           Version="0.2.0"
+           UpgradeCode="8F1B9A7C-2E4D-4B6A-9C3F-1D8E5A6B7C90"
+           Scope="perUser" Compressed="yes">
+    <MajorUpgrade DowngradeErrorMessage="已安装更新版本的 RouteAudio。" />
+    <MediaTemplate EmbedCab="yes" />
+    <StandardDirectory Id="LocalAppDataFolder">
+      <Directory Id="ProgramsFolder" Name="Programs">
+        <Directory Id="INSTALLFOLDER" Name="RouteAudio" />
+      </Directory>
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppShortcutFolder" Name="RouteAudio" />
+    </StandardDirectory>
+    <Feature Id="MainFeature" Title="RouteAudio" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="InstallFolderCleanup" />
+    </Feature>
+  </Package>
+  <Fragment>
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="cmp_README_md" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_README_md" Source="F:\project\音频分配\artifacts\publish\RouteAudio\README.md" />
+      </Component>
+      <Component Id="cmp_RouteAudio_Audio_dll" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_Audio_dll" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.Audio.dll" />
+      </Component>
+      <Component Id="cmp_RouteAudio_Core_dll" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_Core_dll" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.Core.dll" />
+      </Component>
+      <Component Id="cmp_RouteAudio_deps_json" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_deps_json" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.deps.json" />
+      </Component>
+      <Component Id="cmp_RouteAudio_dll" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_dll" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.dll" />
+      </Component>
+      <Component Id="cmp_RouteAudio_exe" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_exe" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.exe" />
+      </Component>
+      <Component Id="cmp_RouteAudio_Interop_dll" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_Interop_dll" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.Interop.dll" />
+      </Component>
+      <Component Id="cmp_RouteAudio_runtimeconfig_json" Directory="INSTALLFOLDER" Guid="*">
+        <File Id="fil_RouteAudio_runtimeconfig_json" Source="F:\project\音频分配\artifacts\publish\RouteAudio\RouteAudio.runtimeconfig.json" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+  <Fragment>
+    <Component Id="InstallFolderCleanup" Directory="INSTALLFOLDER" Guid="B7E5D3C1-4A2F-4E6B-9C8D-0F1E2A3B4C5D">
+      <RemoveFolder Id="RemoveInstallFolder" Directory="INSTALLFOLDER" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\RouteAudio" Name="InstallFolder" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+  <Fragment>
+    <Component Id="StartMenuShortcut" Directory="AppShortcutFolder" Guid="3F0C2B1A-9D4E-4C8B-A7F6-2E1D0C9B8A70">
+      <Shortcut Id="AppShortcut" Name="RouteAudio"
+                Description="把每个应用的声音送到指定的输出设备"
+                Target="[INSTALLFOLDER]RouteAudio.exe" WorkingDirectory="INSTALLFOLDER" />
+      <RemoveFolder Id="RemoveAppShortcutFolder" Directory="AppShortcutFolder" On="uninstall" />
+      <RegistryValue Root="HKCU" Key="Software\RouteAudio" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+    </Component>
+  </Fragment>
+</Wix>
