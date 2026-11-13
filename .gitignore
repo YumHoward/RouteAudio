@@ -1,0 +1,24 @@
+# 构建产物
+bin/
+obj/
+publish/
+artifacts/
+
+# 用户配置与日志
+*.user
+*.suo
+.vs/
+.idea/
+
+# 日志与诊断
+*.log
+logs/
+
+# 系统
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# 测试
+TestResults/
+coverage/

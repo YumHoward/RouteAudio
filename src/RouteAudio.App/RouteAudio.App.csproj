@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>RouteAudio.App</RootNamespace>
+    <AssemblyName>RouteAudio</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RouteAudio.Core\RouteAudio.Core.csproj" />
+    <ProjectReference Include="..\RouteAudio.Audio\RouteAudio.Audio.csproj" />
+    <ProjectReference Include="..\RouteAudio.Interop\RouteAudio.Interop.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>RouteAudio.Audio</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\RouteAudio.Core\RouteAudio.Core.csproj" />
+    <ProjectReference Include="..\RouteAudio.Interop\RouteAudio.Interop.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,52 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteAudio.Interop", "RouteAudio.Interop\RouteAudio.Interop.csproj", "{45CB9F6A-B6F0-47AC-9256-25B0AB2704D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteAudio.Audio", "RouteAudio.Audio\RouteAudio.Audio.csproj", "{4AA9F6C7-C91B-4C7A-B5A5-D5A28AD603CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AudioProbe", "..\tools\AudioProbe\AudioProbe.csproj", "{04DEE6B3-CC66-4393-A656-BC75C4DC7590}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteAudio.Core", "RouteAudio.Core\RouteAudio.Core.csproj", "{E500014C-4749-4FCE-90F7-4C488DBC7B13}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteAudio.App", "RouteAudio.App\RouteAudio.App.csproj", "{A5846970-4825-439A-885F-A9AC5272786D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RouteAudio.Core.Tests", "..\tests\RouteAudio.Core.Tests\RouteAudio.Core.Tests.csproj", "{D184A26F-7E39-4490-BAB5-7FD3F63C7B1A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{45CB9F6A-B6F0-47AC-9256-25B0AB2704D7}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{45CB9F6A-B6F0-47AC-9256-25B0AB2704D7}.Debug|Any CPU.Build.0 = Debug|x64
+		{45CB9F6A-B6F0-47AC-9256-25B0AB2704D7}.Release|Any CPU.ActiveCfg = Release|x64
+		{45CB9F6A-B6F0-47AC-9256-25B0AB2704D7}.Release|Any CPU.Build.0 = Release|x64
+		{4AA9F6C7-C91B-4C7A-B5A5-D5A28AD603CE}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{4AA9F6C7-C91B-4C7A-B5A5-D5A28AD603CE}.Debug|Any CPU.Build.0 = Debug|x64
+		{4AA9F6C7-C91B-4C7A-B5A5-D5A28AD603CE}.Release|Any CPU.ActiveCfg = Release|x64
+		{4AA9F6C7-C91B-4C7A-B5A5-D5A28AD603CE}.Release|Any CPU.Build.0 = Release|x64
+		{04DEE6B3-CC66-4393-A656-BC75C4DC7590}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04DEE6B3-CC66-4393-A656-BC75C4DC7590}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04DEE6B3-CC66-4393-A656-BC75C4DC7590}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04DEE6B3-CC66-4393-A656-BC75C4DC7590}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E500014C-4749-4FCE-90F7-4C488DBC7B13}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{E500014C-4749-4FCE-90F7-4C488DBC7B13}.Debug|Any CPU.Build.0 = Debug|x64
+		{E500014C-4749-4FCE-90F7-4C488DBC7B13}.Release|Any CPU.ActiveCfg = Release|x64
+		{E500014C-4749-4FCE-90F7-4C488DBC7B13}.Release|Any CPU.Build.0 = Release|x64
+		{A5846970-4825-439A-885F-A9AC5272786D}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{A5846970-4825-439A-885F-A9AC5272786D}.Debug|Any CPU.Build.0 = Debug|x64
+		{A5846970-4825-439A-885F-A9AC5272786D}.Release|Any CPU.ActiveCfg = Release|x64
+		{A5846970-4825-439A-885F-A9AC5272786D}.Release|Any CPU.Build.0 = Release|x64
+		{D184A26F-7E39-4490-BAB5-7FD3F63C7B1A}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{D184A26F-7E39-4490-BAB5-7FD3F63C7B1A}.Debug|Any CPU.Build.0 = Debug|x64
+		{D184A26F-7E39-4490-BAB5-7FD3F63C7B1A}.Release|Any CPU.ActiveCfg = Release|x64
+		{D184A26F-7E39-4490-BAB5-7FD3F63C7B1A}.Release|Any CPU.Build.0 = Release|x64
+	EndGlobalSection
+EndGlobal
