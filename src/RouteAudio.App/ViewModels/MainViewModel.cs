@@ -422,9 +422,9 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
-        var devices = _host.Routing.Devices;
         var statuses = _host.Routing.GetStatuses().ToDictionary(s => s.App.Id, StringComparer.OrdinalIgnoreCase);
         var entries = _host.Routing.ActiveProfile.Entries;
+        var devices = FilterDevices(_host.Routing.Devices, entries);
         var runtimeApps = _host.Routing.GetRunningApps();
 
         var signature = BuildSignature(devices, statuses, entries, runtimeApps);
@@ -485,6 +485,21 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(VirtualCableHint));
     }
 
+    /// <summary>
+    /// 隐藏「没有路由的虚拟设备」。有路由的虚拟设备必须保留，否则用户会看不到/取消不了已配置的路由。
+    /// </summary>
+    private List<DeviceDescriptor> FilterDevices(IReadOnlyList<DeviceDescriptor> devices, IReadOnlyList<RouteEntry> entries)
+    {
+        if (!_store.Current.Settings.HideVirtualDevices) return devices.ToList();
+
+        var routedIds = entries
+            .Select(e => e.Target.DeviceId)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        return devices.Where(d => !d.IsVirtual || routedIds.Contains(d.Id)).ToList();
+    }
+
     private void ApplyFilter()
     {
         var filter = _filterText.Trim();
@@ -511,6 +526,7 @@ public sealed class MainViewModel : ObservableObject
         var parts = new List<string>(devices.Count + apps.Count + entries.Count + 4)
         {
             "p:" + entries.Count,
+            "v:" + devices.Count,
         };
 
         foreach (var device in devices)

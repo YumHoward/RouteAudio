@@ -75,12 +75,12 @@ public partial class MainWindow : Window
         vm.Refresh(force: true);
     }
 
-    private void Settings_Click(object sender, RoutedEventArgs e)
+    private async void Settings_Click(object sender, RoutedEventArgs e)
     {
         if (DataContext is not MainViewModel vm) return;
         var window = new SettingsWindow(vm.Store, vm.Host, vm.Log) { Owner = this };
         window.ShowDialog();
-        vm.Refresh(force: true);
+        await vm.RefreshAsync();
     }
 
     private async void ClearAll_Click(object sender, RoutedEventArgs e)

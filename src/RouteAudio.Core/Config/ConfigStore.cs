@@ -13,6 +13,9 @@ public sealed class AppSettings
     public int ReconcileSeconds { get; set; } = 3;
 
     public bool NotifyOnFailure { get; set; } = true;
+
+    /// <summary>隐藏虚拟音频设备（有路由的虚拟设备仍会显示）。</summary>
+    public bool HideVirtualDevices { get; set; } = true;
 }
 
 public sealed class UiState

@@ -24,6 +24,7 @@ public partial class SettingsWindow : Window
         StartWithWindowsCheck.IsChecked = settings.StartWithWindows;
         MinimizeToTrayCheck.IsChecked = settings.MinimizeToTray;
         NotifyCheck.IsChecked = settings.NotifyOnFailure;
+        HideVirtualCheck.IsChecked = settings.HideVirtualDevices;
         ReconcileBox.Text = settings.ReconcileSeconds.ToString();
         ConfigPathText.Text = store.FilePath;
         BackendText.Text = host.Routing.BackendStatus;
@@ -38,6 +39,7 @@ public partial class SettingsWindow : Window
         settings.StartWithWindows = StartWithWindowsCheck.IsChecked == true;
         settings.MinimizeToTray = MinimizeToTrayCheck.IsChecked == true;
         settings.NotifyOnFailure = NotifyCheck.IsChecked == true;
+        settings.HideVirtualDevices = HideVirtualCheck.IsChecked == true;
         settings.ReconcileSeconds = int.TryParse(ReconcileBox.Text.Trim(), out var seconds)
             ? Math.Clamp(seconds, 1, 60)
             : 3;

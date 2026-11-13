@@ -3,7 +3,7 @@
   <!-- 由 installer/generate-installer.ps1 生成，请勿手工编辑 -->
   <Package Name="RouteAudio"
            Manufacturer="RouteAudio Contributors"
-           Version="0.3.0"
+           Version="0.3.1"
            UpgradeCode="8F1B9A7C-2E4D-4B6A-9C3F-1D8E5A6B7C90"
            Scope="perUser" Compressed="yes">
     <MajorUpgrade DowngradeErrorMessage="已安装更新版本的 RouteAudio。" />
