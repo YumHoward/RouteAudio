@@ -29,7 +29,7 @@ jobs:
         run: dotnet build src/RouteAudio.sln -c Release --no-restore /warnaserror
 
       - name: Test
-        run: dotnet test tests/RouteAudio.Core.Tests/RouteAudio.Core.Tests.csproj -c Release --no-build --logger "console;verbosity=normal"
+        run: dotnet test tests/RouteAudio.Core.Tests/RouteAudio.Core.Tests.csproj -c Release --logger "console;verbosity=normal"
 
       - name: Dependency audit
         run: dotnet list src/RouteAudio.sln package --vulnerable --include-transitive
