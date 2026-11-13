@@ -1,0 +1,56 @@
+name: Bug 报告
+description: 报告路由不生效、崩溃或界面异常
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。提交前请先看 [README 常见问题](../README.md#8-常见问题)，并确认不是系统限制（独占模式应用、DRM 内容无法改道）。
+  - type: input
+    id: version
+    attributes:
+      label: RouteAudio 版本
+      description: 设置页 / 安装包文件名中的版本号
+      placeholder: "0.3.1"
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows 版本
+      description: 运行 `winver` 填完整版本号
+      placeholder: "Windows 11 26100.1742"
+    validations:
+      required: true
+  - type: textarea
+    id: devices
+    attributes:
+      label: 音频设备
+      description: 涉及哪些输出设备（含虚拟设备）；可从程序目录的 AudioProbe.exe devices 输出粘贴
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开游戏和音乐
+        2. 把游戏拖到耳机
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果 vs 实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: 位于 `%LOCALAPPDATA%\RouteAudio\logs\app-yyyyMMdd.log`，请粘贴相关片段并脱敏
+      render: text
+    validations:
+      required: false

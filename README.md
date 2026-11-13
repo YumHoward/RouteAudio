@@ -1,5 +1,9 @@
 # RouteAudio · 声路由
 
+[![build-test](https://github.com/YumHoward/RouteAudio/actions/workflows/ci.yml/badge.svg)](https://github.com/YumHoward/RouteAudio/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-lightgrey)
+
 > 把**每一个进程**的声音，送到**你想让它去的那个音箱**。
 
 Windows 按进程音频输出分配工具：游戏进耳机、音乐进音箱、会议进通讯耳机、直播混音进采集卡——一次配置，长期生效。
@@ -10,9 +14,9 @@ Windows 按进程音频输出分配工具：游戏进耳机、音乐进音箱、
 | --- | --- |
 | 文档版本 | v1.0（2026-11） |
 | 目标平台 | Windows 10 1803+ / Windows 11（x64、ARM64） |
-| 技术栈 | .NET 8 + WPF + WASAPI（C# / P-Invoke / CsWin32） |
+| 技术栈 | .NET 8 + WPF + WASAPI（C# / 手写 COM 互操作） |
 | 许可证 | MIT（自有代码） |
-| 当前阶段 | 立项 + 技术预研（PoC） |
+| 当前阶段 | v0.3.1 可用版本（策略路由 + 设备音量 + 规则/配置档） |
 
 ---
 
@@ -52,7 +56,11 @@ Windows 上「按进程分配输出」可行，且有三条互不排斥的实现
 | [03-项目结构与实施计划](docs/03-项目结构与实施计划.md) | 仓库目录树、分层规则、接口骨架、构建与 CI/CD、测试计划、里程碑与排期、风险登记册、合规清单 | 开发 / 项目管理 |
 | [04-附录](docs/04-附录-PoC验证清单与技术参考.md) | PoC 验证清单（P1–P10）、API 速查、参考资料、术语表、待定问题 | 全员 |
 | [05-PoC 结果报告](docs/05-PoC结果报告.md) | 首轮实测结果（P1 通过 / P2 不通过 / C1 通过）、架构调整、复现步骤 | 全员 |
-| [06-实现进度](docs/06-实现进度.md) | v0.1 实现清单、端到端验证记录、构建运行方式、下一步 | 全员 |
+| [06-实现进度](docs/06-实现进度.md) | 实现清单、端到端验证记录、构建运行方式、下一步 | 全员 |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | 环境要求、构建测试、代码约定、PR 流程 | 贡献者 |
+| [CHANGELOG.md](CHANGELOG.md) | 版本变更记录 | 所有人 |
+| [SECURITY.md](SECURITY.md) | 漏洞报告方式与安全边界 | 安全研究者 |
+| [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) | 第三方组件与许可 | 合规 / 分发 |
 
 ## 4. 仓库结构
 
@@ -76,19 +84,19 @@ RouteAudio/
 └─ build/                       # 构建脚本（规划）
 ```
 
-## 5. 当前状态（v0.3 可运行闭环）
+## 5. 当前状态（v0.3.1 可运行版本）
 
 ```powershell
 dotnet build src/RouteAudio.sln -c Debug
 src\RouteAudio.App\bin\x64\Debug\net8.0-windows\RouteAudio.exe
-dotnet test tests\RouteAudio.Core.Tests\RouteAudio.Core.Tests.csproj   # 26 passed
+dotnet test tests\RouteAudio.Core.Tests\RouteAudio.Core.Tests.csproj   # 28 passed
 ```
 
 **已实现**：设备/会话枚举、策略路由（含回读校验与降级）、拖拽路由 UI、应用身份识别、规则求值 + 规则/配置档编辑 UI、设备别名、**每个设备独立的音量/静音控制**、**虚拟设备隐藏开关**、配置档增删改复制与切换、配置持久化与备份、设备热插拔事件、Toast 通知、流式管线（采集→渲染，镜像/桥接基础）、托盘、设置、开机自启、状态与原因码、日志。
 
 **端到端已验证**：写入配置 → 应用对账 → 策略下发 → 应用重新建会话后音频落到目标设备 → UI 状态从「已设置（下次生效）」翻转为「已生效」。
 
-**下一步**：镜像接产品（「同播到…」）、兼容模式（C 路线）、安装包与签名、兼容性矩阵。详见 [06-实现进度](docs/06-实现进度.md)。
+**下一步**：镜像接产品（「同播到…」）、兼容模式（C 路线）、代码签名与自动更新、兼容性矩阵。详见 [06-实现进度](docs/06-实现进度.md)。
 
 ## 6. 核心特性（v1.0 目标）
 
@@ -107,7 +115,16 @@ dotnet test tests\RouteAudio.Core.Tests\RouteAudio.Core.Tests.csproj   # 26 pass
 
 ## 8. 许可与合规
 
-自有代码 MIT。第三方依赖全部为 MIT / Apache-2.0 / BSD（清单见 03 文档第 14 章）。可选虚拟声卡（VB-CABLE）由用户自行安装，项目不打包、不再分发其驱动；本项目不修改系统音频驱动，不绕过任何版权保护机制。
+本项目以 [MIT](LICENSE) 许可发布，可自由使用、修改、分发（保留版权声明）。第三方组件清单见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+
+- 项目**不打包、不分发**任何第三方音频驱动；VB-CABLE / VoiceMeeter / NVIDIA Broadcast 等虚拟设备由用户自行安装。
+- 不修改系统音频驱动、不绕过版权保护（DRM）、不提供反作弊对抗能力。
+
+## 9. 免责声明
+
+本项目使用 Windows **未公开接口**（`Windows.Media.Internal.AudioPolicyConfig`）实现按应用选择输出设备。该接口可能随系统更新失效（表现为「路由不生效」，不会导致系统损坏或提权）；请在升级 Windows 大版本后自行验证。软件按「现状」提供，作者不对因使用本软件造成的设备设置变化、音频异常或数据损失承担责任。
+
+遇到问题请先阅读 [SECURITY.md](SECURITY.md) 与 [CONTRIBUTING.md](CONTRIBUTING.md)，或提交 Issue。
 
 ---
 

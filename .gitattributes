@@ -1,0 +1,30 @@
+# 默认按文本处理，由 Git 自动判断二进制
+* text=auto
+
+# C# / WPF / MSBuild：Windows 习惯 CRLF
+*.cs        text eol=crlf
+*.xaml      text eol=crlf
+*.csproj    text eol=crlf
+*.props     text eol=crlf
+*.sln       text eol=crlf
+*.ps1       text eol=crlf
+*.wxs       text eol=crlf
+*.manifest  text eol=crlf
+
+# 文档与配置：LF
+*.md        text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# 二进制
+*.ico   binary
+*.png   binary
+*.jpg   binary
+*.wav   binary
+*.msi   binary
+*.zip   binary
+*.pdb   binary
+*.dll   binary
