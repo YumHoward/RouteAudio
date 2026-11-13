@@ -253,7 +253,7 @@ public sealed class RoutingService : IDisposable
         return result;
     }
 
-    private (DeviceDescriptor? Device, bool Degraded) ResolveTarget(RouteTarget target, IReadOnlyList<DeviceDescriptor> devices)
+    private static (DeviceDescriptor? Device, bool Degraded) ResolveTarget(RouteTarget target, IReadOnlyList<DeviceDescriptor> devices)
     {
         if (!target.IsRoleTarget)
         {
@@ -271,12 +271,15 @@ public sealed class RoutingService : IDisposable
     {
         AudioRole.Communications => devices.FirstOrDefault(d => d.IsDefaultCommunications)
                                     ?? devices.FirstOrDefault(d => d.IsDefaultConsole)
-                                    ?? devices.FirstOrDefault(),
+                                    ?? FirstOrNull(devices),
         AudioRole.Multimedia => devices.FirstOrDefault(d => d.IsDefaultMultimedia)
                                 ?? devices.FirstOrDefault(d => d.IsDefaultConsole)
-                                ?? devices.FirstOrDefault(),
-        _ => devices.FirstOrDefault(d => d.IsDefaultConsole) ?? devices.FirstOrDefault(),
+                                ?? FirstOrNull(devices),
+        _ => devices.FirstOrDefault(d => d.IsDefaultConsole) ?? FirstOrNull(devices),
     };
+
+    private static DeviceDescriptor? FirstOrNull(IReadOnlyList<DeviceDescriptor> devices) =>
+        devices.Count > 0 ? devices[0] : null;
 
     private Dictionary<string, RunningApp> BuildRunningApps(IReadOnlyList<SessionInfo> sessions)
     {

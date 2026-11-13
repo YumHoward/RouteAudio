@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using RouteAudio.Core.Models;
@@ -50,7 +51,7 @@ public partial class RuleEditorWindow : Window
     private void LoadExisting(Rule rule)
     {
         NameBox.Text = rule.Name;
-        PriorityBox.Text = rule.Priority.ToString();
+        PriorityBox.Text = rule.Priority.ToString(CultureInfo.InvariantCulture);
         EnabledBox.IsChecked = rule.Enabled;
 
         var leaves = rule.Match switch

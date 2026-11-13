@@ -20,7 +20,7 @@ public sealed class ProcessLoopbackCapture : LoopbackCaptureBase
     {
         ComThread.EnsureInitialized();
         using var blob = ActivationParamsBlob.CreateProcessLoopback(_targetProcessId, _includeProcessTree);
-        var handler = new ActivationCompletionHandler();
+        using var handler = new ActivationCompletionHandler();
         var handlerPtr = Marshal.GetComInterfaceForObject(handler, typeof(IActivateAudioInterfaceCompletionHandler));
 
         try

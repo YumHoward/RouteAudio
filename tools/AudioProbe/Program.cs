@@ -633,7 +633,7 @@ internal static class Program
         self.Start();
         Thread.Sleep(800);
         var selfSessions = sessions.GetSessionsForProcess((uint)Environment.ProcessId);
-        Console.WriteLine($"[自身] sessions={selfSessions.Count} endpoint={(selfSessions.FirstOrDefault()?.EndpointName ?? "-")}");
+        Console.WriteLine($"[自身] sessions={selfSessions.Count} endpoint={(selfSessions.Count > 0 ? selfSessions[0].EndpointName : "-")}");
         foreach (var role in new[] { ERole.eConsole, ERole.eMultimedia })
         {
             var hr = policy.Set((uint)Environment.ProcessId, EDataFlow.eRender, role, alternative.Id);

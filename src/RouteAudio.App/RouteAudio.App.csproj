@@ -10,6 +10,9 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets/app.ico</ApplicationIcon>
     <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+    <!-- WFAC010：WPF 应用需要通过 manifest 声明 PerMonitorV2 DPI，与 WinForms 分析器建议冲突
+         CA1001：App 是 WPF 应用入口，生命周期由框架管理，字段在 OnExit 中释放 -->
+    <NoWarn>$(NoWarn);WFAC010;CA1001</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

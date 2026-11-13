@@ -270,7 +270,11 @@ public abstract class LoopbackCaptureBase : IDisposable
         _sampleEvent = null;
     }
 
-    public void Dispose() => Stop();
+    public void Dispose()
+    {
+        Stop();
+        GC.SuppressFinalize(this);
+    }
 }
 
 public readonly record struct CaptureStatistics(double Rms, double Peak, double Seconds, long Frames)

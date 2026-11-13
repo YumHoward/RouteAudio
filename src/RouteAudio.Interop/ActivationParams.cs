@@ -84,7 +84,7 @@ public sealed class ActivationParamsBlob : IDisposable
 /// ActivateAudioInterfaceAsync 的完成回调。必须作为 COM 对象暴露给系统。
 /// </summary>
 [ComVisible(true)]
-public sealed class ActivationCompletionHandler : IActivateAudioInterfaceCompletionHandler
+public sealed class ActivationCompletionHandler : IActivateAudioInterfaceCompletionHandler, IDisposable
 {
     private readonly ManualResetEventSlim _completed = new(false);
     private readonly object _gate = new();
@@ -129,4 +129,6 @@ public sealed class ActivationCompletionHandler : IActivateAudioInterfaceComplet
     }
 
     public bool WaitForCompletion(TimeSpan timeout) => _completed.Wait(timeout);
+
+    public void Dispose() => _completed.Dispose();
 }

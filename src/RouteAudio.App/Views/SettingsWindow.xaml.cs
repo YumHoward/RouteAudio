@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO;
 using System.Windows;
 using RouteAudio.App.Services;
@@ -25,7 +26,7 @@ public partial class SettingsWindow : Window
         MinimizeToTrayCheck.IsChecked = settings.MinimizeToTray;
         NotifyCheck.IsChecked = settings.NotifyOnFailure;
         HideVirtualCheck.IsChecked = settings.HideVirtualDevices;
-        ReconcileBox.Text = settings.ReconcileSeconds.ToString();
+        ReconcileBox.Text = settings.ReconcileSeconds.ToString(CultureInfo.InvariantCulture);
         ConfigPathText.Text = store.FilePath;
         BackendText.Text = host.Routing.BackendStatus;
         VirtualCableText.Text = host.HasVirtualCable
