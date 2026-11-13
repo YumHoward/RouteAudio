@@ -1,7 +1,7 @@
 ﻿param(
     [Parameter(Mandatory = $true)][string]$SourceDir,
     [Parameter(Mandatory = $true)][string]$OutputWxs,
-    [string]$Version = "0.2.0"
+    [string]$Version = "0.3.2"
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,15 +13,21 @@ function XmlEscape([string]$text) {
 $files = @(Get-ChildItem -Path $SourceDir -File | Where-Object { $_.Extension -ne '.pdb' } | Sort-Object Name)
 if ($files.Count -eq 0) { throw "发布目录为空: $SourceDir" }
 
+$repoRoot = Split-Path $PSScriptRoot -Parent
+$licensePath = [System.IO.Path]::Combine($PSScriptRoot, "License.rtf")
+$iconPath = [System.IO.Path]::Combine($repoRoot, "src", "RouteAudio.App", "Assets", "app.ico")
+$scriptPath = [System.IO.Path]::Combine($PSScriptRoot, "check-dotnet8.vbs")
+
 $sb = New-Object System.Text.StringBuilder
 [void]$sb.AppendLine('<?xml version="1.0" encoding="utf-8"?>')
-[void]$sb.AppendLine('<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">')
+[void]$sb.AppendLine('<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"')
+[void]$sb.AppendLine('     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">')
 [void]$sb.AppendLine('  <!-- 由 installer/generate-installer.ps1 生成，请勿手工编辑 -->')
 [void]$sb.AppendLine('  <Package Name="RouteAudio"')
 [void]$sb.AppendLine('           Manufacturer="RouteAudio Contributors"')
 [void]$sb.AppendLine(('           Version="{0}"' -f $Version))
 [void]$sb.AppendLine('           UpgradeCode="8F1B9A7C-2E4D-4B6A-9C3F-1D8E5A6B7C90"')
-[void]$sb.AppendLine('           Scope="perUser" Compressed="yes">')
+[void]$sb.AppendLine('           Scope="perUser" Compressed="yes" Codepage="936">')
 [void]$sb.AppendLine('    <MajorUpgrade DowngradeErrorMessage="已安装更新版本的 RouteAudio。" />')
 [void]$sb.AppendLine('    <MediaTemplate EmbedCab="yes" />')
 [void]$sb.AppendLine('    <StandardDirectory Id="LocalAppDataFolder">')
@@ -37,6 +43,22 @@ $sb = New-Object System.Text.StringBuilder
 [void]$sb.AppendLine('      <ComponentRef Id="StartMenuShortcut" />')
 [void]$sb.AppendLine('      <ComponentRef Id="InstallFolderCleanup" />')
 [void]$sb.AppendLine('    </Feature>')
+[void]$sb.AppendLine('    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />')
+[void]$sb.AppendLine(('    <WixVariable Id="WixUILicenseRtf" Value="{0}" />' -f (XmlEscape $licensePath)))
+[void]$sb.AppendLine(('    <Icon Id="RouteAudio.ico" SourceFile="{0}" />' -f (XmlEscape $iconPath)))
+[void]$sb.AppendLine('    <Property Id="ARPPRODUCTICON" Value="RouteAudio.ico" />')
+[void]$sb.AppendLine('    <Property Id="ARPHELPLINK" Value="https://github.com/YumHoward/RouteAudio" />')
+[void]$sb.AppendLine('    <Property Id="DOTNET8FOUND" Value="0" />')
+[void]$sb.AppendLine(('    <CustomAction Id="CheckDotNet8" Script="vbscript" ScriptSourceFile="{0}" Execute="immediate" Return="ignore" />' -f (XmlEscape $scriptPath)))
+[void]$sb.AppendLine('    <CustomAction Id="DotNet8Required" Error="RouteAudio 需要 .NET 8 Desktop Runtime（x64）。请先安装后重试：https://aka.ms/dotnet/8.0/desktop" />')
+[void]$sb.AppendLine('    <InstallUISequence>')
+[void]$sb.AppendLine('      <Custom Action="CheckDotNet8" Before="CostInitialize" />')
+[void]$sb.AppendLine('      <Custom Action="DotNet8Required" After="CheckDotNet8" Condition="DOTNET8FOUND &lt;&gt; &quot;1&quot; AND NOT Installed" />')
+[void]$sb.AppendLine('    </InstallUISequence>')
+[void]$sb.AppendLine('    <InstallExecuteSequence>')
+[void]$sb.AppendLine('      <Custom Action="CheckDotNet8" Before="LaunchConditions" />')
+[void]$sb.AppendLine('      <Custom Action="DotNet8Required" After="CheckDotNet8" Condition="DOTNET8FOUND &lt;&gt; &quot;1&quot; AND NOT Installed" />')
+[void]$sb.AppendLine('    </InstallExecuteSequence>')
 [void]$sb.AppendLine('  </Package>')
 [void]$sb.AppendLine('  <Fragment>')
 [void]$sb.AppendLine('    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">')

@@ -92,6 +92,8 @@ src\RouteAudio.App\bin\x64\Debug\net8.0-windows\RouteAudio.exe
 dotnet test tests\RouteAudio.Core.Tests\RouteAudio.Core.Tests.csproj   # 28 passed
 ```
 
+**安装**：双击 `RouteAudio-x.y.z-x64.msi` 进入安装向导（欢迎 → 许可 → 选择安装位置 → 安装 → 完成）。默认装到 `%LOCALAPPDATA%\Programs\RouteAudio`，可改到其他可写目录，全程不需要管理员权限。若系统未安装 .NET 8 Desktop Runtime，安装程序会在开始前提示并给出下载地址（安装包不自动下载运行时）。静默安装：`msiexec /i RouteAudio-0.3.2-x64.msi /qn`。
+
 **已实现**：设备/会话枚举、策略路由（含回读校验与降级）、拖拽路由 UI、应用身份识别、规则求值 + 规则/配置档编辑 UI、设备别名、**每个设备独立的音量/静音控制**、**虚拟设备隐藏开关**、配置档增删改复制与切换、配置持久化与备份、设备热插拔事件、Toast 通知、流式管线（采集→渲染，镜像/桥接基础）、托盘、设置、开机自启、状态与原因码、日志。
 
 **端到端已验证**：写入配置 → 应用对账 → 策略下发 → 应用重新建会话后音频落到目标设备 → UI 状态从「已设置（下次生效）」翻转为「已生效」。

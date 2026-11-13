@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <!-- 由 installer/generate-installer.ps1 生成，请勿手工编辑 -->
   <Package Name="RouteAudio"
            Manufacturer="RouteAudio Contributors"
-           Version="0.3.1"
+           Version="0.3.2"
            UpgradeCode="8F1B9A7C-2E4D-4B6A-9C3F-1D8E5A6B7C90"
-           Scope="perUser" Compressed="yes">
+           Scope="perUser" Compressed="yes" Codepage="936">
     <MajorUpgrade DowngradeErrorMessage="已安装更新版本的 RouteAudio。" />
     <MediaTemplate EmbedCab="yes" />
     <StandardDirectory Id="LocalAppDataFolder">
@@ -21,6 +22,22 @@
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentRef Id="InstallFolderCleanup" />
     </Feature>
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+    <WixVariable Id="WixUILicenseRtf" Value="F:\project\音频分配\installer\License.rtf" />
+    <Icon Id="RouteAudio.ico" SourceFile="F:\project\音频分配\src\RouteAudio.App\Assets\app.ico" />
+    <Property Id="ARPPRODUCTICON" Value="RouteAudio.ico" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/YumHoward/RouteAudio" />
+    <Property Id="DOTNET8FOUND" Value="0" />
+    <CustomAction Id="CheckDotNet8" Script="vbscript" ScriptSourceFile="F:\project\音频分配\installer\check-dotnet8.vbs" Execute="immediate" Return="ignore" />
+    <CustomAction Id="DotNet8Required" Error="RouteAudio 需要 .NET 8 Desktop Runtime（x64）。请先安装后重试：https://aka.ms/dotnet/8.0/desktop" />
+    <InstallUISequence>
+      <Custom Action="CheckDotNet8" Before="CostInitialize" />
+      <Custom Action="DotNet8Required" After="CheckDotNet8" Condition="DOTNET8FOUND &lt;&gt; &quot;1&quot; AND NOT Installed" />
+    </InstallUISequence>
+    <InstallExecuteSequence>
+      <Custom Action="CheckDotNet8" Before="LaunchConditions" />
+      <Custom Action="DotNet8Required" After="CheckDotNet8" Condition="DOTNET8FOUND &lt;&gt; &quot;1&quot; AND NOT Installed" />
+    </InstallExecuteSequence>
   </Package>
   <Fragment>
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
