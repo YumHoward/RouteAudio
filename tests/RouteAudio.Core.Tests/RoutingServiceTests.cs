@@ -1,4 +1,4 @@
-using RouteAudio.Core.Abstractions;
+﻿using RouteAudio.Core.Abstractions;
 using RouteAudio.Core.Config;
 using RouteAudio.Core.Rules;
 using RouteAudio.Core.Models;
@@ -116,6 +116,40 @@ public sealed class RoutingServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task SetDeviceVolume_ForwardsToDeviceCatalog()
+    {
+        var devices = new FakeDeviceCatalog([DeviceA, DeviceB]);
+        var sessions = new FakeSessionCatalog();
+        var apps = new FakeAppCatalog { [100] = GameApp };
+        var service = new RoutingService(devices, sessions, apps, new FakeBackend(), new ConfigStore(ConfigPath));
+        using var _ = service;
+
+        var ok = await service.SetDeviceVolumeAsync(DeviceB.Id, 0.42);
+
+        Assert.True(ok);
+        var call = Assert.Single(devices.VolumeCalls);
+        Assert.Equal(DeviceB.Id, call.DeviceId);
+        Assert.Equal(0.42, call.Volume, 3);
+    }
+
+    [Fact]
+    public async Task SetDeviceMute_ForwardsToDeviceCatalog()
+    {
+        var devices = new FakeDeviceCatalog([DeviceA, DeviceB]);
+        var sessions = new FakeSessionCatalog();
+        var apps = new FakeAppCatalog();
+        var service = new RoutingService(devices, sessions, apps, new FakeBackend(), new ConfigStore(ConfigPath));
+        using var _ = service;
+
+        var ok = await service.SetDeviceMuteAsync(DeviceA.Id, true);
+
+        Assert.True(ok);
+        var call = Assert.Single(devices.MuteCalls);
+        Assert.Equal(DeviceA.Id, call.DeviceId);
+        Assert.True(call.Muted);
+    }
+
+    [Fact]
     public async Task BackendUnavailable_MarksFailure()
     {
         var (service, backend, sessions) = CreateService();
@@ -169,7 +203,23 @@ public sealed class RoutingServiceTests : IDisposable
 
     private sealed class FakeDeviceCatalog(IReadOnlyList<DeviceDescriptor> devices) : IDeviceCatalog
     {
+        public List<(string DeviceId, double Volume)> VolumeCalls { get; } = [];
+
+        public List<(string DeviceId, bool Muted)> MuteCalls { get; } = [];
+
         public IReadOnlyList<DeviceDescriptor> GetDevices() => devices;
+
+        public bool SetVolume(string deviceId, double volume)
+        {
+            VolumeCalls.Add((deviceId, volume));
+            return true;
+        }
+
+        public bool SetMute(string deviceId, bool muted)
+        {
+            MuteCalls.Add((deviceId, muted));
+            return true;
+        }
     }
 
     private sealed class FakeSessionCatalog : ISessionCatalog
@@ -225,3 +275,4 @@ public sealed class RoutingServiceTests : IDisposable
         }
     }
 }
+

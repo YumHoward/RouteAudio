@@ -33,7 +33,7 @@ public sealed class TrayService : IDisposable
     {
         _notifyIcon = new NotifyIcon
         {
-            Icon = SystemIcons.Application,
+            Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? string.Empty) ?? SystemIcons.Application,
             Text = "RouteAudio · 声路由",
             Visible = true,
         };

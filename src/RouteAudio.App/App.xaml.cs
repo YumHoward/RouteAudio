@@ -32,6 +32,20 @@ public partial class App : Application
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         var log = new FileAuditLog();
+        DispatcherUnhandledException += (_, args) =>
+        {
+            log.Error("[fatal] 未处理的 UI 异常", args.Exception);
+            MessageBox.Show($"发生未处理的错误，已写入日志：{Environment.NewLine}{args.Exception.Message}", "RouteAudio",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            args.Handled = true;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            log.Error("[fatal] 未处理的后台异常", args.ExceptionObject as Exception);
+        TaskScheduler.UnobservedTaskException += (_, args) =>
+        {
+            log.Error("[fatal] 未观察的任务异常", args.Exception);
+            args.SetObserved();
+        };
         log.Info($"==== RouteAudio 启动 pid={Environment.ProcessId} ====");
 
         var store = new ConfigStore();

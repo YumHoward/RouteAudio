@@ -384,6 +384,39 @@ public sealed class RoutingService : IDisposable
         await ReconcileAsync().ConfigureAwait(false);
     }
 
+    /// <summary>设置设备端点音量（0..1）。</summary>
+    public async Task<bool> SetDeviceVolumeAsync(string deviceId, double volume)
+    {
+        var ok = _deviceCatalog.SetVolume(deviceId, volume);
+        if (!ok) return false;
+
+        RefreshDeviceList();
+        await Task.CompletedTask;
+        return true;
+    }
+
+    /// <summary>设置设备静音。</summary>
+    public async Task<bool> SetDeviceMuteAsync(string deviceId, bool muted)
+    {
+        var ok = _deviceCatalog.SetMute(deviceId, muted);
+        if (!ok) return false;
+
+        RefreshDeviceList();
+        await Task.CompletedTask;
+        return true;
+    }
+
+    private void RefreshDeviceList()
+    {
+        var devices = LoadDevices();
+        lock (_stateGate)
+        {
+            _devices = devices;
+        }
+
+        RaiseChanged();
+    }
+
     public async Task<Profile> CreateProfileAsync(string name)
     {
         var profile = new Profile
@@ -477,24 +510,28 @@ public sealed class RoutingService : IDisposable
         var result = new List<AppRuntimeView>();
         var ownPid = (uint)Environment.ProcessId;
 
-        foreach (var group in sessions
-                     .Where(s => !s.IsSystemSounds && s.ProcessId != ownPid)
-                     .GroupBy(s => s.ProcessId))
+        var entries = sessions
+            .Where(s => !s.IsSystemSounds && s.ProcessId != ownPid)
+            .Select(s => (Session: s, App: _appCatalog.Resolve(s.ProcessId)))
+            .ToList();
+
+        foreach (var group in entries.GroupBy(e => e.App.Id, StringComparer.OrdinalIgnoreCase))
         {
-            var first = group.First();
-            var app = _appCatalog.Resolve(first.ProcessId);
+            var app = group.First().App;
+            var activeSession = group.Select(e => e.Session).FirstOrDefault(s => s.IsActive) ?? group.First().Session;
+
             lock (_stateGate)
             {
                 _statuses.TryGetValue(app.Id, out var status);
                 result.Add(new AppRuntimeView
                 {
                     App = app,
-                    ProcessId = first.ProcessId,
-                    CurrentDeviceId = first.EndpointId,
-                    CurrentDeviceName = first.EndpointName,
-                    HasAudio = group.Any(s => s.IsActive),
-                    Volume = first.Volume,
-                    Muted = first.Muted,
+                    ProcessId = group.First().Session.ProcessId,
+                    CurrentDeviceId = activeSession.EndpointId,
+                    CurrentDeviceName = activeSession.EndpointName,
+                    HasAudio = group.Any(e => e.Session.IsActive),
+                    Volume = activeSession.Volume,
+                    Muted = activeSession.Muted,
                     Status = status,
                 });
             }

@@ -40,6 +40,7 @@ internal static class Program
                 "p2" => LoopbackVsMute(),
                 "c1" => VirtualCableBridge(),
                 "p3" => StreamingLatency(args),
+                "volume" => Volume(args),
                 "help" or "-h" or "--help" => Usage(),
                 _ => Unknown(args[0]),
             };
@@ -295,6 +296,44 @@ internal static class Program
         capture.Stop();
         Kill(child2);
         return passed ? ExitPass : ExitFail;
+    }
+
+    // ---------------- volume：设备音量读写（验证用） ----------------
+
+    private static int Volume(string[] args)
+    {
+        using var devices = new DeviceService();
+        var deviceId = GetStringArg(args, "--device", null);
+        var level = GetDoubleArg(args, "--level", -1);
+        var muteArg = GetStringArg(args, "--mute", null);
+
+        var targets = deviceId is null
+            ? devices.GetRenderEndpoints()
+            : devices.GetRenderEndpoints().Where(d => d.Id == deviceId).ToList();
+
+        foreach (var device in targets)
+        {
+            var before = devices.TryGetEndpointVolume(device.Id, out var mutedBefore, out var levelBefore, out var hr0);
+            Console.WriteLine($"- {device.FriendlyName}");
+            Console.WriteLine($"    id     : {device.Id}");
+            Console.WriteLine(before
+                ? $"    before : {levelBefore:P0}{(mutedBefore ? " [静音]" : "")}"
+                : $"    before : 读取失败 0x{hr0:X8}");
+
+            if (level >= 0 || muteArg is not null)
+            {
+                bool? mute = muteArg switch { "on" => true, "off" => false, _ => null };
+                var ok = devices.TrySetEndpointVolume(device.Id, (float)level, mute, out var hr);
+                Console.WriteLine(ok ? "    set    : OK" : $"    set    : 失败 0x{hr:X8}");
+
+                if (devices.TryGetEndpointVolume(device.Id, out var mutedAfter, out var levelAfter, out _))
+                {
+                    Console.WriteLine($"    after  : {levelAfter:P0}{(mutedAfter ? " [静音]" : "")}");
+                }
+            }
+        }
+
+        return ExitPass;
     }
 
     // ---------------- P3：流式管线延迟与稳定性 ----------------

@@ -41,20 +41,32 @@ public sealed class WindowsDeviceCatalog : IDeviceCatalog, IDisposable
     public IReadOnlyList<DeviceDescriptor> GetDevices()
     {
         return _devices.GetRenderEndpoints()
-            .Select(d => new DeviceDescriptor
+            .Select(d =>
             {
-                Id = d.Id,
-                Name = d.FriendlyName,
-                EnumeratorName = d.EnumeratorName,
-                ContainerId = d.ContainerId?.ToString("D"),
-                IsDefaultConsole = d.IsDefaultConsole,
-                IsDefaultMultimedia = d.IsDefaultMultimedia,
-                IsDefaultCommunications = d.IsDefaultCommunications,
-                IsVirtual = d.LooksVirtual,
-                IsActive = d.State == Interop.DeviceState.ACTIVE,
+                var hasVolume = _devices.TryGetEndpointVolume(d.Id, out var muted, out var volume, out _);
+                return new DeviceDescriptor
+                {
+                    Id = d.Id,
+                    Name = d.FriendlyName,
+                    EnumeratorName = d.EnumeratorName,
+                    ContainerId = d.ContainerId?.ToString("D"),
+                    IsDefaultConsole = d.IsDefaultConsole,
+                    IsDefaultMultimedia = d.IsDefaultMultimedia,
+                    IsDefaultCommunications = d.IsDefaultCommunications,
+                    IsVirtual = d.LooksVirtual,
+                    IsActive = d.State == Interop.DeviceState.ACTIVE,
+                    Volume = hasVolume ? volume : 1,
+                    Muted = hasVolume && muted,
+                };
             })
             .ToList();
     }
+
+    public bool SetVolume(string deviceId, double volume) =>
+        _devices.TrySetEndpointVolume(deviceId, (float)Math.Clamp(volume, 0, 1), null, out _);
+
+    public bool SetMute(string deviceId, bool muted) =>
+        _devices.TrySetEndpointVolume(deviceId, -1f, muted, out _);
 
     public void Dispose()
     {

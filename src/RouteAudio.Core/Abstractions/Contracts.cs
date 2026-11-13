@@ -20,6 +20,12 @@ public sealed record SessionInfo
 public interface IDeviceCatalog
 {
     IReadOnlyList<DeviceDescriptor> GetDevices();
+
+    /// <summary>设置设备端点主音量（0..1）。</summary>
+    bool SetVolume(string deviceId, double volume);
+
+    /// <summary>设置设备静音。</summary>
+    bool SetMute(string deviceId, bool muted);
 }
 
 public interface IAppCatalog

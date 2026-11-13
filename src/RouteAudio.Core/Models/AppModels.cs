@@ -16,6 +16,12 @@ public sealed record DeviceDescriptor
     public bool IsVirtual { get; init; }
     public bool IsActive { get; init; } = true;
 
+    /// <summary>设备主音量 0..1（系统端点音量，不是某个应用）。</summary>
+    public double Volume { get; init; } = 1;
+
+    /// <summary>设备是否被静音。</summary>
+    public bool Muted { get; init; }
+
     [JsonIgnore]
     public string DisplayName => string.IsNullOrWhiteSpace(Alias) ? Name : Alias!;
 

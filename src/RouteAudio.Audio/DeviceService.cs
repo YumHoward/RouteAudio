@@ -149,6 +149,71 @@ public sealed class DeviceService : IDisposable
         }
     }
 
+    /// <summary>设置端点主音量与/或静音。volume 为负表示不修改音量。</summary>
+    public bool TrySetEndpointVolume(string endpointId, float volume, bool? muted, out int hresult)
+    {
+        ComThread.EnsureInitialized();
+        hresult = 0;
+
+        var device = OpenDevice(endpointId);
+        if (device is null)
+        {
+            hresult = unchecked((int)0x80070490);
+            return false;
+        }
+
+        try
+        {
+            var iid = Guids.IID_IAudioEndpointVolume;
+            var hr = device.Activate(ref iid, ClsCtx.ALL, IntPtr.Zero, out var obj);
+            if (hr < 0)
+            {
+                hresult = hr;
+                return false;
+            }
+
+            if (obj is not IAudioEndpointVolume endpointVolume)
+            {
+                hresult = unchecked((int)0x80004002);
+                return false;
+            }
+
+            try
+            {
+                var context = Guid.Empty;
+                if (muted is { } mute)
+                {
+                    hr = endpointVolume.SetMute(mute, ref context);
+                    if (hr < 0)
+                    {
+                        hresult = hr;
+                        return false;
+                    }
+                }
+
+                if (volume >= 0)
+                {
+                    hr = endpointVolume.SetMasterVolumeLevelScalar(Math.Clamp(volume, 0f, 1f), ref context);
+                    if (hr < 0)
+                    {
+                        hresult = hr;
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            finally
+            {
+                Marshal.ReleaseComObject(endpointVolume);
+            }
+        }
+        finally
+        {
+            Marshal.ReleaseComObject(device);
+        }
+    }
+
     private static DeviceEndpointInfo ReadDevice(IMMDevice device, IReadOnlyDictionary<ERole, string?> defaults)
     {
         var id = string.Empty;
