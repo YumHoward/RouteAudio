@@ -1,0 +1,104 @@
+<Window x:Class="RouteAudio.App.Views.RuleEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:RouteAudio.App.Views"
+        Title="编辑规则"
+        Width="640" Height="600"
+        MinWidth="560" MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        Background="{StaticResource WindowBackgroundBrush}"
+        FontFamily="Microsoft YaHei UI, Segoe UI">
+    <Grid Margin="18">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- 基本信息 -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="110" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="规则名称" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBox x:Name="NameBox" Height="30" Margin="0,4,0,0" VerticalContentAlignment="Center" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                <TextBlock Text="优先级（大者优先）" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" />
+                <TextBox x:Name="PriorityBox" Height="30" Margin="0,4,0,0" VerticalContentAlignment="Center" Text="0" />
+            </StackPanel>
+            <CheckBox x:Name="EnabledBox" Grid.Column="2" Content="启用" IsChecked="True"
+                      VerticalAlignment="Bottom" Margin="16,0,0,6" />
+        </Grid>
+
+        <!-- 条件 -->
+        <Grid Grid.Row="1" Margin="0,0,0,6">
+            <TextBlock Text="匹配条件" FontSize="14" FontWeight="SemiBold" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <TextBlock Text="组合方式" VerticalAlignment="Center" FontSize="12"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+                <ComboBox x:Name="CombineBox" Width="130" Height="26" Margin="8,0,0,0" VerticalContentAlignment="Center" />
+            </StackPanel>
+        </Grid>
+
+        <ListBox Grid.Row="2" x:Name="ConditionsList" ItemsSource="{Binding Conditions}"
+                 BorderBrush="{StaticResource BorderBrushSoft}">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="30" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{x:Static local:RuleEditorWindow.ConditionKinds}"
+                                  SelectedItem="{Binding Kind, Mode=TwoWay}" Height="26" />
+                        <TextBox Grid.Column="1" Margin="6,0" Height="26" VerticalContentAlignment="Center"
+                                 Text="{Binding Pattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <Button Grid.Column="2" Content="✕" Height="26" Padding="0" Click="RemoveCondition_Click" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <Grid Grid.Row="3" Margin="0,8,0,14">
+            <Button Content="+ 添加条件" Width="100" HorizontalAlignment="Left"
+                    Style="{StaticResource ActionButton}" Click="AddCondition_Click" />
+            <TextBlock Text="通配符：* 任意字符，** 任意目录，? 单字符" FontSize="11"
+                       Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Right"
+                       VerticalAlignment="Center" />
+        </Grid>
+
+        <!-- 动作 -->
+        <TextBlock Grid.Row="4" Text="执行动作" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,6" />
+
+        <Grid Grid.Row="5" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ComboBox x:Name="TargetKindBox" Height="28" VerticalContentAlignment="Center"
+                      SelectionChanged="TargetKindBox_SelectionChanged" />
+            <ComboBox x:Name="DeviceBox" Grid.Column="1" Margin="10,0,0,0" Height="28"
+                      VerticalContentAlignment="Center" DisplayMemberPath="DisplayName" />
+            <ComboBox x:Name="RoleBox" Grid.Column="1" Margin="10,0,0,0" Height="28"
+                      VerticalContentAlignment="Center" Visibility="Collapsed" />
+        </Grid>
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="保存" Width="92" Style="{StaticResource ActionButton}" Click="Save_Click" IsDefault="True" />
+            <Button Content="取消" Width="92" Margin="8,0,0,0" Style="{StaticResource ActionButton}" Click="Cancel_Click" IsCancel="True" />
+        </StackPanel>
+
+        <TextBlock Grid.Row="7" x:Name="HintText" FontSize="11" Margin="0,10,0,0"
+                   Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" />
+    </Grid>
+</Window>

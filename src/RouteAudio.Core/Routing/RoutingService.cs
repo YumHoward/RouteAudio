@@ -368,9 +368,78 @@ public sealed class RoutingService : IDisposable
     public async Task SwitchProfileAsync(string profileId)
     {
         if (Config.Profiles.All(p => p.Id != profileId)) return;
+        if (Config.ActiveProfileId == profileId) return;
+
+        foreach (var entry in Config.ActiveProfile.Entries) _pendingCleanup.Add(entry.App.Id);
+
         Config.ActiveProfileId = profileId;
         _store.Save();
         await ReconcileAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>UI 直接修改配置（规则/条目）后调用：保存并立即对账。</summary>
+    public async Task ApplyConfigChangesAsync()
+    {
+        _store.Save();
+        await ReconcileAsync().ConfigureAwait(false);
+    }
+
+    public async Task<Profile> CreateProfileAsync(string name)
+    {
+        var profile = new Profile
+        {
+            Id = "p" + Guid.NewGuid().ToString("n")[..8],
+            Name = string.IsNullOrWhiteSpace(name) ? "新配置档" : name.Trim(),
+        };
+
+        foreach (var entry in Config.ActiveProfile.Entries) _pendingCleanup.Add(entry.App.Id);
+
+        Config.Profiles.Add(profile);
+        Config.ActiveProfileId = profile.Id;
+        _store.Save();
+        await ReconcileAsync().ConfigureAwait(false);
+        return profile;
+    }
+
+    public async Task<Profile?> DuplicateProfileAsync(Profile source, string name)
+    {
+        if (Config.Profiles.All(p => p.Id != source.Id)) return null;
+
+        foreach (var entry in Config.ActiveProfile.Entries) _pendingCleanup.Add(entry.App.Id);
+
+        var copy = source.Clone(
+            "p" + Guid.NewGuid().ToString("n")[..8],
+            string.IsNullOrWhiteSpace(name) ? source.Name + " 副本" : name.Trim());
+
+        Config.Profiles.Add(copy);
+        Config.ActiveProfileId = copy.Id;
+        _store.Save();
+        await ReconcileAsync().ConfigureAwait(false);
+        return copy;
+    }
+
+    public async Task RenameProfileAsync(Profile profile, string name)
+    {
+        var target = Config.Profiles.FirstOrDefault(p => p.Id == profile.Id);
+        if (target is null || string.IsNullOrWhiteSpace(name)) return;
+        target.Name = name.Trim();
+        _store.Save();
+        await ReconcileAsync().ConfigureAwait(false);
+    }
+
+    public async Task<bool> DeleteProfileAsync(Profile profile)
+    {
+        if (Config.Profiles.Count <= 1) return false;
+
+        var removed = Config.Profiles.RemoveAll(p => p.Id == profile.Id) > 0;
+        if (!removed) return false;
+
+        foreach (var entry in profile.Entries) _pendingCleanup.Add(entry.App.Id);
+        if (Config.ActiveProfileId == profile.Id) Config.ActiveProfileId = Config.Profiles[0].Id;
+
+        _store.Save();
+        await ReconcileAsync().ConfigureAwait(false);
+        return true;
     }
 
     public async Task RenameDeviceAsync(string deviceId, string? alias)

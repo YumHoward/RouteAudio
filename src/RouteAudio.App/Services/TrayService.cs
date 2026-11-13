@@ -2,8 +2,10 @@ using System.Drawing;
 using System.Windows.Forms;
 using RouteAudio.App.ViewModels;
 using RouteAudio.App.Views;
+using RouteAudio.Audio;
 using RouteAudio.Core.Abstractions;
 using RouteAudio.Core.Config;
+using RouteAudio.Core.Models;
 
 namespace RouteAudio.App.Services;
 
@@ -12,15 +14,19 @@ public sealed class TrayService : IDisposable
 {
     private readonly MainWindow _window;
     private readonly MainViewModel _viewModel;
+    private readonly AudioHost _host;
     private readonly IAuditLog _log;
+    private readonly Dictionary<string, RouteState> _lastStates = new(StringComparer.OrdinalIgnoreCase);
     private NotifyIcon? _notifyIcon;
     private ContextMenuStrip? _menu;
 
-    public TrayService(MainWindow window, MainViewModel viewModel, IAuditLog log)
+    public TrayService(MainWindow window, MainViewModel viewModel, AudioHost host, IAuditLog log)
     {
         _window = window;
         _viewModel = viewModel;
+        _host = host;
         _log = log;
+        _host.Routing.Changed += OnRoutingChanged;
     }
 
     public void Initialize()
@@ -69,6 +75,33 @@ public sealed class TrayService : IDisposable
 
         _menu.Opening += (_, _) => BuildMenu();
         _notifyIcon.ContextMenuStrip = _menu;
+    }
+
+    private void OnRoutingChanged(object? sender, EventArgs e)
+    {
+        if (!_viewModel.NotifyOnFailure) return;
+
+        foreach (var status in _host.Routing.GetStatuses())
+        {
+            _lastStates.TryGetValue(status.App.Id, out var previous);
+            var isProblem = status.State is RouteState.Failed or RouteState.Degraded;
+
+            if (isProblem && previous != status.State)
+            {
+                var text = $"{status.App.DisplayName}：{status.StateText}" +
+                           (status.Reason == RouteReason.None ? "" : $"（{status.Reason.ToText()}）");
+                ShowToast("RouteAudio 路由提醒", text, ToolTipIcon.Warning);
+            }
+
+            _lastStates[status.App.Id] = status.State;
+        }
+    }
+
+    private void ShowToast(string title, string text, ToolTipIcon icon)
+    {
+        var app = System.Windows.Application.Current;
+        if (app?.Dispatcher is null) return;
+        app.Dispatcher.BeginInvoke(() => _notifyIcon?.ShowBalloonTip(4000, title, text, icon));
     }
 
     private void ShowWindow()

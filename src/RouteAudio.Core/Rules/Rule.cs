@@ -34,14 +34,19 @@ public sealed record MuteAction : RuleAction
     public bool Mute { get; init; } = true;
 }
 
-public sealed record Rule
+public sealed class Rule
 {
-    public string Id { get; init; } = Guid.NewGuid().ToString("n");
-    public string Name { get; init; } = "";
-    public int Priority { get; init; }
-    public bool Enabled { get; init; } = true;
-    public MatchNode Match { get; init; } = new AnyNode();
-    public List<RuleAction> Actions { get; init; } = [];
+    public string Id { get; set; } = Guid.NewGuid().ToString("n");
+
+    public string Name { get; set; } = "";
+
+    public int Priority { get; set; }
+
+    public bool Enabled { get; set; } = true;
+
+    public MatchNode Match { get; set; } = new AnyNode();
+
+    public List<RuleAction> Actions { get; set; } = [];
 }
 
 public sealed record RuleMatchResult(Rule Rule, IReadOnlyList<RuleAction> Actions, int MatchedConditions);

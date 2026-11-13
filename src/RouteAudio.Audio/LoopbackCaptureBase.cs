@@ -33,6 +33,15 @@ public abstract class LoopbackCaptureBase : IDisposable
 
     public bool IsRunning => _running;
 
+    /// <summary>每个采集包（16-bit 交错）到达时触发；用于流式转发。</summary>
+    public event Action<short[]>? SamplesAvailable;
+
+    /// <summary>是否把样本累积到内存（录制/取证用）。流式转发时应设为 false。</summary>
+    public bool CollectSamples { get; set; } = true;
+
+    /// <summary>采集端缓冲帧数（Start 之后有效）。</summary>
+    public uint BufferFrames { get; private set; }
+
     public string? EndpointDescription { get; protected set; }
 
     protected abstract (IAudioClient? Client, string? Error) Activate();
@@ -64,8 +73,9 @@ public abstract class LoopbackCaptureBase : IDisposable
 
             if (hr < 0) return (false, $"Initialize 0x{hr:X8}");
 
-            hr = _client.GetBufferSize(out _);
+            hr = _client.GetBufferSize(out var bufferFrames);
             if (hr < 0) return (false, $"GetBufferSize 0x{hr:X8}");
+            BufferFrames = bufferFrames;
 
             var captureIid = Guids.IID_IAudioCaptureClient;
             hr = _client.GetService(ref captureIid, out var captureObj);
@@ -164,7 +174,19 @@ public abstract class LoopbackCaptureBase : IDisposable
             _sumSquares += sum;
             _sampleCount += sampleCount;
             if (peak > _peak) _peak = peak;
-            _buffer.Add(samples);
+            if (CollectSamples) _buffer.Add(samples);
+        }
+
+        var handler = SamplesAvailable;
+        if (handler is null) return;
+
+        try
+        {
+            handler(samples);
+        }
+        catch
+        {
+            // 消费方异常不得中断采集线程
         }
     }
 

@@ -22,12 +22,20 @@ public sealed class AudioHost : IDisposable
         _backend = new PolicyRoutingBackend(log);
 
         Devices = new WindowsDeviceCatalog(_devices);
+        Watcher = new DeviceWatcher(_devices);
+        var (watchOk, watchError) = Watcher.Start();
+        Log.Info(watchOk ? "[watch] 设备事件已注册" : $"[watch] 设备事件注册失败，退化为轮询: {watchError}");
+        Watcher.DevicesChanged += (_, _) => DevicesChanged?.Invoke(this, EventArgs.Empty);
         Sessions = new WindowsSessionCatalog(_sessions);
         Apps = new AppCatalog();
         Routing = new RoutingService(Devices, Sessions, Apps, _backend, store, log);
     }
 
+    public event EventHandler? DevicesChanged;
+
     public IAuditLog Log { get; }
+
+    public DeviceWatcher Watcher { get; }
 
     public WindowsDeviceCatalog Devices { get; }
 
@@ -44,6 +52,7 @@ public sealed class AudioHost : IDisposable
     public void Dispose()
     {
         Routing.Dispose();
+        Watcher.Dispose();
         _backend.Dispose();
         _devices.Dispose();
     }

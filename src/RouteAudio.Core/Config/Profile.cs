@@ -55,4 +55,22 @@ public sealed class Profile
             },
         ],
     };
+
+    public Profile Clone(string newId, string newName) => new()
+    {
+        Id = newId,
+        Name = newName,
+        Entries = Entries.Select(CloneEntry).ToList(),
+        Rules = Rules.ToList(),
+    };
+
+    private static RouteEntry CloneEntry(RouteEntry entry) => new()
+    {
+        App = entry.App,
+        Target = entry.Target,
+        Mode = entry.Mode,
+        GainDb = entry.GainDb,
+        Enabled = entry.Enabled,
+        Mirror = entry.Mirror,
+    };
 }

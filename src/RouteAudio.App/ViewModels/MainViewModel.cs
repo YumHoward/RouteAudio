@@ -140,9 +140,11 @@ public sealed class MainViewModel : ObservableObject
         RefreshCommand = RelayCommand.Create(() => _ = RefreshAsync());
         ClearAllCommand = RelayCommand.Create(() => _ = ClearAllAsync());
         SettingsCommand = RelayCommand.Create(() => OpenSettings());
+        OpenRulesCommand = RelayCommand.Create(OpenRules);
         OpenConfigFolderCommand = RelayCommand.Create(OpenConfigFolder);
 
         _host.Routing.Changed += (_, _) => DispatchRefresh();
+        _host.DevicesChanged += (_, _) => _ = RefreshAsync();
     }
 
     public ObservableCollection<AppItemViewModel> RunningApps { get; } = [];
@@ -158,6 +160,8 @@ public sealed class MainViewModel : ObservableObject
     public RelayCommand ClearAllCommand { get; }
 
     public RelayCommand SettingsCommand { get; }
+
+    public RelayCommand OpenRulesCommand { get; }
 
     public RelayCommand OpenConfigFolderCommand { get; }
 
@@ -198,6 +202,8 @@ public sealed class MainViewModel : ObservableObject
     public string ConfigPath => _store.FilePath;
 
     public bool MinimizeOnClose => _store.Current.Settings.MinimizeToTray;
+
+    public bool NotifyOnFailure => _store.Current.Settings.NotifyOnFailure;
 
     public bool HasRoleTargets => RoleTargets.Count > 0;
 
@@ -339,6 +345,13 @@ public sealed class MainViewModel : ObservableObject
         if (string.IsNullOrEmpty(directory)) return;
         Directory.CreateDirectory(directory);
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", $"\"{directory}\"") { UseShellExecute = true });
+    }
+
+    private void OpenRules()
+    {
+        var window = new Views.RulesWindow(_host, _log) { Owner = Application.Current.MainWindow };
+        window.ShowDialog();
+        Refresh();
     }
 
     private void OpenSettings()

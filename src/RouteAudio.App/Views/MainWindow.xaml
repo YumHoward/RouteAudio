@@ -44,6 +44,8 @@
                         Style="{StaticResource ActionButton}" Margin="10,0,0,0" />
                 <Button Content="全部清除" Command="{Binding ClearAllCommand}"
                         Style="{StaticResource ActionButton}" Margin="8,0,0,0" />
+                <Button Content="规则" Command="{Binding OpenRulesCommand}"
+                        Style="{StaticResource ActionButton}" Margin="8,0,0,0" />
                 <Button Content="设置" Command="{Binding SettingsCommand}"
                         Style="{StaticResource ActionButton}" Margin="8,0,0,0" />
             </StackPanel>
@@ -127,6 +129,12 @@
                                 <Border Style="{StaticResource CardBorder}" Margin="0,0,0,12"
                                         AllowDrop="True" Tag="{Binding}"
                                         DragOver="Lane_DragOver" Drop="Lane_Drop">
+                                    <Border.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="重命名设备…" Click="RenameDevice_Click" />
+                                            <MenuItem Header="刷新" Click="RefreshLane_Click" />
+                                        </ContextMenu>
+                                    </Border.ContextMenu>
                                     <StackPanel>
                                         <Grid>
                                             <Grid.ColumnDefinitions>

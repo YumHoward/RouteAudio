@@ -39,6 +39,7 @@ internal static class Program
                 "p1b" => PolicyDiagnostics(),
                 "p2" => LoopbackVsMute(),
                 "c1" => VirtualCableBridge(),
+                "p3" => StreamingLatency(args),
                 "help" or "-h" or "--help" => Usage(),
                 _ => Unknown(args[0]),
             };
@@ -95,6 +96,10 @@ internal static class Program
             Console.WriteLine($"    state     : {d.State}   enumerator: {d.EnumeratorName ?? "?"}   virtual: {d.LooksVirtual}");
             Console.WriteLine($"    interface : {d.InterfaceName ?? "?"}    desc: {d.Description ?? "?"}");
             Console.WriteLine($"    default   : {(flags.Length == 0 ? "-" : flags)}");
+            var volume = devices.TryGetEndpointVolume(d.Id, out var muted, out var level, out var volumeHr);
+            Console.WriteLine(volume
+                ? $"    volume    : {level:P0}{(muted ? "  [已静音]" : "")}"
+                : $"    volume    : 读取失败 0x{volumeHr:X8}");
         }
 
         return ExitPass;
@@ -290,6 +295,173 @@ internal static class Program
         capture.Stop();
         Kill(child2);
         return passed ? ExitPass : ExitFail;
+    }
+
+    // ---------------- P3：流式管线延迟与稳定性 ----------------
+
+    private static int StreamingLatency(string[] args)
+    {
+        Console.WriteLine("=== P3 流式管线（进程回环 → 目标端点渲染）延迟与稳定性 ===");
+        using var devices = new DeviceService();
+        var sessions = new SessionService(devices);
+        var endpoints = devices.GetRenderEndpoints();
+
+        (bool Ok, bool Muted, float Volume) VolumeOf(DeviceEndpointInfo e) =>
+            devices.TryGetEndpointVolume(e.Id, out var m, out var v, out _) ? (true, m, v) : (false, false, 1f);
+
+        var requestedTarget = GetStringArg(args, "--target", null);
+        DeviceEndpointInfo? target;
+        if (requestedTarget is not null)
+        {
+            target = endpoints.FirstOrDefault(e => e.Id == requestedTarget);
+        }
+        else
+        {
+            target = endpoints
+                .Where(e =>
+                {
+                    var vol = VolumeOf(e);
+                    return vol.Ok && !vol.Muted && vol.Volume > 0.01f;
+                })
+                .OrderByDescending(e => !e.LooksVirtual)
+                .FirstOrDefault();
+            target ??= endpoints.FirstOrDefault(e => e.IsDefaultMultimedia) ?? endpoints[0];
+        }
+
+        if (target is null)
+        {
+            Console.Error.WriteLine("[FAIL] 没有可用的目标端点（可能全部静音或音量为 0）");
+            return ExitFail;
+        }
+
+        var targetVolume = VolumeOf(target);
+        Console.WriteLine($"[目标端点] {target.FriendlyName}（音量 {targetVolume.Volume:P0}{(targetVolume.Muted ? "，静音" : "")}）");
+
+        // 找一个「静音 / 零音量」的端点作为原输出，避免桥接输出与原声叠加
+        var silentSink = endpoints.FirstOrDefault(e =>
+        {
+            if (e.Id == target.Id) return false;
+            var vol = VolumeOf(e);
+            return vol.Ok && (vol.Muted || vol.Volume < 0.01f);
+        });
+
+        using var policy = AudioPolicyConfig.TryCreate(message => Console.WriteLine($"[policy] {message}"));
+
+        var child = StartToneChild(150);
+        var session = WaitForSession(sessions, (uint)child.Id, TimeSpan.FromSeconds(10));
+        if (session is null)
+        {
+            Console.Error.WriteLine("[FAIL] 测试音进程没有创建会话");
+            Kill(child);
+            return ExitFail;
+        }
+
+        var redirected = false;
+        if (policy is not null && silentSink is not null)
+        {
+            foreach (var role in new[] { ERole.eConsole, ERole.eMultimedia })
+            {
+                _ = policy.Set((uint)child.Id, EDataFlow.eRender, role, silentSink.Id);
+            }
+
+            Kill(child);
+            Thread.Sleep(500);
+            child = StartToneChild(150);
+            session = WaitForSession(sessions, (uint)child.Id, TimeSpan.FromSeconds(10));
+            if (session is null)
+            {
+                Console.Error.WriteLine("[FAIL] 第二个测试音进程没有创建会话");
+                Kill(child);
+                return ExitFail;
+            }
+
+            redirected = session.EndpointId == silentSink.Id;
+            Console.WriteLine(redirected
+                ? $"[隔离] 原输出已改到静音端点「{silentSink.FriendlyName}」，可与桥接输出分开校验"
+                : $"[隔离] 未能改道原输出（实际 {session.EndpointName}），目标端点回环可能混入原声");
+        }
+
+        using var capture = new ProcessLoopbackCapture((uint)child.Id);
+        using var renderer = new AudioRenderer(devices, target.Id);
+        using var bridge = new StreamingBridge(capture, renderer);
+
+        var (ok, error) = bridge.Start();
+        if (!ok)
+        {
+            Console.Error.WriteLine($"[FAIL] 管线启动失败: {error}");
+            Kill(child);
+            return ExitFail;
+        }
+
+        Thread.Sleep(2000);
+
+        using var verify = new DeviceLoopbackCapture(devices, target.Id);
+        var (verifyOk, verifyError) = verify.Start();
+        if (!verifyOk)
+        {
+            Console.Error.WriteLine($"[WARN] 目标端点回环校验不可用: {verifyError}");
+        }
+
+        Thread.Sleep(500);
+        _ = verify.TakeStats();
+        _ = capture.TakeStats();
+        Thread.Sleep(3000);
+        var verifyStats = verify.TakeStats();
+        var captureStats = capture.TakeStats();
+
+        var underrunsBefore = renderer.Underruns;
+        var queue = new List<double>(256);
+        var sw = Stopwatch.StartNew();
+        while (sw.Elapsed < TimeSpan.FromSeconds(10))
+        {
+            queue.Add(renderer.QueueMilliseconds);
+            Thread.Sleep(50);
+        }
+
+        var underruns = renderer.Underruns - underrunsBefore;
+        queue.Sort();
+
+        var p50 = Percentile(queue, 0.50);
+        var p95 = Percentile(queue, 0.95);
+        var captureHalfMs = capture.BufferFrames / 2.0 / AudioRenderer.SampleRate * 1000;
+        var renderHalfMs = renderer.BufferFrames / 2.0 / AudioRenderer.SampleRate * 1000;
+        var estimate = captureHalfMs + p50 + renderHalfMs + 20;
+
+        Console.WriteLine();
+        Console.WriteLine($"[采集] 缓冲 {capture.BufferFrames} 帧（{capture.BufferFrames / 48.0:F1} ms）");
+        Console.WriteLine($"[渲染] 缓冲 {renderer.BufferFrames} 帧（{renderer.BufferFrames / 48.0:F1} ms）");
+        Console.WriteLine($"[队列] p50={p50:F1} ms  p95={p95:F1} ms  max={(queue.Count > 0 ? queue[^1] : 0):F1} ms");
+        Console.WriteLine($"[欠载] {underruns} 次 / 10s    已渲染 {renderer.FramesRendered} 帧");
+        Console.WriteLine($"[采集端] {captureStats}");
+        Console.WriteLine($"[目标端点回环] {verifyStats}");
+        Console.WriteLine($"[估算端到端] {estimate:F1} ms（采集缓冲一半 + 队列 + 渲染缓冲一半 + 20 ms 引擎周期，不含 DAC）");
+        Console.WriteLine();
+
+        var audioFlows = verifyStats.RmsDb > -70;
+        var passed = audioFlows && underruns <= 5 && p95 < 150;
+        Console.WriteLine(passed
+            ? "[PASS] 流式管线可用：音频到达目标端点，队列稳定，欠载可接受"
+            : "[FAIL] 流式管线未达标（见上方数据）");
+
+        bridge.Stop();
+
+        if (policy is not null)
+        {
+            foreach (var role in new[] { ERole.eConsole, ERole.eMultimedia })
+            {
+                _ = policy.Set((uint)child.Id, EDataFlow.eRender, role, null);
+            }
+        }
+
+        Kill(child);
+        return passed ? ExitPass : ExitFail;
+    }
+
+    private static double Percentile(List<double> sorted, double percentile)
+    {
+        if (sorted.Count == 0) return 0;
+        var index = (int)Math.Clamp(Math.Ceiling(percentile * sorted.Count) - 1, 0, sorted.Count - 1);
+        return sorted[index];
     }
 
     // ---------------- P2：会话静音 vs 进程回环采集 ----------------

@@ -82,4 +82,23 @@ public partial class MainWindow : Window
 
         await viewModel.UnrouteAsync(item.App);
     }
+
+    private async void RenameDevice_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not DeviceLaneViewModel lane) return;
+        if (DataContext is not MainViewModel viewModel) return;
+
+        var dialog = new InputDialog("重命名设备", "设备别名（留空恢复原名）", lane.Device.Alias ?? lane.Device.Name, allowEmpty: true)
+        {
+            Owner = this,
+        };
+
+        if (dialog.ShowDialog() != true) return;
+        await viewModel.RenameDeviceAsync(lane.Device, dialog.Value);
+    }
+
+    private void RefreshLane_Click(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainViewModel viewModel) viewModel.Refresh();
+    }
 }
